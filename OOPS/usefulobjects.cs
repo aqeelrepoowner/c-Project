@@ -136,15 +136,16 @@ namespace OOPS
     class Users
     {
         protected int id;
-        protected string name;
-        protected string type;
-        protected DateTime created;
-        protected Bugs[] reportedBugs;
+        protected string FirstName;
+        protected string LastName;
+        protected string Email;
+        protected DateTime DOB;
+        
     }
 
     sealed class Configuration
     {
-        private string[] entities = new string[] { "Bugs", "Users", "Registration" };
+        private string[] entities = new string[] { "Bugs", "Users", "Registration", "Login" };
         private string[] handlers = new string[] { };
 
         public string[] getEntities()
@@ -159,15 +160,38 @@ namespace OOPS
 
     }
 
-    class Router
+    class Errors
     {
+        private string message;
 
+        public static setMessage(string msg)
+        {
+            this.message = msg;
+        }
+
+        public static displayErrors()
+        {
+            Console.WriteLine(this.message);
+        }
+
+        public static getMessage()
+        {
+            return this.message;
+        }
     }
     
     class Routes
     {
-        private object handlerObj;
-        
+        protected EntityManager em;
+        protected HandlerProvider hp;
+        protected Errors err;
+                
+        public Routes(OOPS.EntityManager em, OOPS.HandlerProvider hp)
+        {
+            this.em = em;
+            this.hp = hp;
+        }   
+
         public void setProviderObject()
         {
 
@@ -178,31 +202,50 @@ namespace OOPS
             
         }
 
-        public void DisplayMenu()
+        public void DisplayMenu(String[] menuItems)
         {
             Console.WriteLine("Enter the menu option");
             Console.WriteLine("1) Registration");
             Console.WriteLine("2) Login");
+        }
 
+        public void DisplayMainMenu()
+        {
+            Console.WriteLine("Enter the menu option");
+            Console.WriteLine("1) Registration");
+            Console.WriteLine("2) Login");
+        }
+
+        public void UnitOfWork(int num)
+        {
             int num;
             bool test = int.TryParse(Console.ReadLine(), out num);
 
             if (test == false)
             {
-                Console.WriteLine("Please enter a numeric menu option.");
+                this.err.setMessage("Please enter a numeric menu option.");
             }
 
-            UnitOfWork(num);
-        }
+            IEnumerable<KeyValuePair<string, object>> handlerType = null;
 
-        public void UnitOfWork(int num)
-        {
-   
-        }
+            switch(num)
+            {
+                case 1:
+                    handlerType = this.hp.getHandlerByKey("Registration");
+                    var handlerRegObj = handlerType.ToDictionary(item => item.Key, item => item.Value);
+                    var ObjReg = (RegistrationHandler) handlerRegObj["Registration"];
+                    Console.WriteLine("Handler Object:- {0} ", ObjReg);
 
-        public Object getHandlerObj()
-        {
-            return this.handlerObj;
+                    ObjReg.Init(this.em);
+                break;
+                case 2:
+                    handlerType = this.hp.getHandlerByKey("Login");
+                    var handlerLoginObj = handlerType.ToDictionary(item => item.Key, item => item.Value);
+                    var ObjLogin = (LoginHandler) handlerLoginObj["Login"];
+                    Console.WriteLine("Handler Object:- {0} ", ObjLogin);
+                    ObjLogin.Init(this.em);
+                break;
+            }
         }
     }
 
@@ -219,25 +262,11 @@ namespace OOPS
             EntityManager em = new EntityManager();
             em.createEntities(config.getEntities());
 
-            Routes route = new Routes();
+            Routes route = new Routes(em, provider);
             
-            route.DisplayMenu();
+            route.DisplayMainMenu();
             
-            switch(num)
-            {
-                case 1:
-                    IEnumerable<KeyValuePair<string, object>> handlerType = provider.getHandlerByKey("Registration");
-                    this.handlerObj = handlerType.ToDictionary(item => item.Key, item => item.Value);
-                    var Obj = (RegistrationHandler) handlerObj["Registration"];
-                    Console.WriteLine("Handler Object:- {0} ", Obj);
-                break;
-                case 2:
-                    IEnumerable<KeyValuePair<string, object>> handlerType = provider.getHandlerByKey("Login");
-                    this.handlerObj = handlerType.ToDictionary(item => item.Key, item => item.Value);
-                    var Obj = (LoginHandler) handlerObj["Login"];
-                    Console.WriteLine("Handler Object:- {0} ", Obj);
-                break;
-            }
+            
             /* foreach (KeyValuePair<string,object> element in em.Entity)
              {
                  Console.WriteLine(element.Value);
@@ -307,23 +336,70 @@ namespace OOPS
         }
     }
 
+    class LoginHandler
+    {
+        public bool isRegistered = false;
+        private OOPS.EntityManager em;
+
+        public void Init(OOPS.EntityManager em)
+        {   
+            this.em = em;
+            DisplayForm();
+        }
+
+        public void DisplayForm()
+        {
+            Console.WriteLine("Enter the Registration Details");
+            Console.WriteLine("Enter Email");
+            var email = Console.ReadLine();
+            Console.WriteLine("Enter Password");
+            var password = Console.ReadLine();
+
+            
+        }
+    }
+
     class RegistrationHandler
     {
         public bool isRegistered = false;
-        public static void Init()
+        private OOPS.EntityManager em;
+
+        public void Init(OOPS.EntityManager em)
+        {   
+            this.em = em;
+            DisplayForm();
+        }
+
+        public void DisplayForm()
         {
+            Console.WriteLine("Enter the Registration Details");
+            Console.WriteLine("Enter First Name");
+            var firstName = Console.ReadLine();
+            Console.WriteLine("Enter Last Name");
+            var lastName = Console.ReadLine();
+            Console.WriteLine("Enter Email");
+            var Email = Console.ReadLine();
+            Console.WriteLine("Enter DOB");
+            var DOB = Console.ReadLine();
             
+
         }
     }
 
     class BugsHandler
     {
-        
+        public void DisplayForm()
+        {
+
+        }
     }
 
     class UsersHandler
     {
-      
+        public void DisplayForm()
+        {
+
+        }
     }
 
     class Repository
